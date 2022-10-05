@@ -961,8 +961,8 @@ export class StreamChat<StreamChatGenerics extends ExtendableGenerics = DefaultG
     }
   };
 
-  get<T>(url: string, params?: AxiosRequestConfig['params']) {
-    return this.doAxiosRequest<T>('get', url, null, { params });
+  get<T>(url: string, params?: AxiosRequestConfig['params'], signal: AbortSignal = {} as AbortSignal) {
+    return this.doAxiosRequest<T>('get', url, null, { params, config: { signal } });
   }
 
   put<T>(url: string, data?: unknown) {
@@ -1419,6 +1419,54 @@ export class StreamChat<StreamChatGenerics extends ExtendableGenerics = DefaultG
 
     return data;
   }
+
+  /**
+  * queryUsersAbortable - Query users and watch user presence
+  *
+  * @param {UserFilters<StreamChatGenerics>} filterConditions MongoDB style filter conditions
+  * @param {UserSort<StreamChatGenerics>} sort Sort options, for instance [{last_active: -1}].
+  * When using multiple fields, make sure you use array of objects to guarantee field order, for instance [{last_active: -1}, {created_at: 1}]
+  * @param {UserOptions} options Option object, {presence: true}
+  * @param {Signal} signal Abort signal, used to cancel the request, AbortController.signal
+  *
+  * @return {Promise<{ users: Array<UserResponse<StreamChatGenerics>> }>} User Query Response
+  */
+  async queryUsersAbortable(
+    filterConditions: UserFilters<StreamChatGenerics>,
+    sort: UserSort<StreamChatGenerics> = [],
+    options: UserOptions = {},
+    signal: AbortSignal,
+  ) {
+    const defaultOptions = {
+      presence: false,
+    };
+
+    // Make sure we wait for the connect promise if there is a pending one
+    await this.setUserPromise;
+
+    if (!this._hasConnectionID()) {
+      defaultOptions.presence = false;
+    }
+
+    // Return a list of users
+    const data = await this.get<APIResponse & { users: Array<UserResponse<StreamChatGenerics>> }>(
+      this.baseURL + '/users',
+      {
+        payload: {
+          filter_conditions: filterConditions,
+          sort: normalizeQuerySort(sort),
+          ...defaultOptions,
+          ...options,
+        },
+      },
+      signal,
+    );
+
+    this.state.updateUsers(data.users);
+
+    return data;
+  }
+
 
   /**
    * queryBannedUsers - Query user bans
