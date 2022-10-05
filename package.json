@@ -1,5 +1,5 @@
 {
-  "name": "stream-chat",
+  "name": "@aicoder3/stream-chat",
   "version": "7.1.0",
   "description": "JS SDK for the Stream Chat API",
   "author": "GetStream",
