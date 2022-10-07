@@ -961,7 +961,7 @@ export class StreamChat<StreamChatGenerics extends ExtendableGenerics = DefaultG
     }
   };
 
-  get<T>(url: string, params?: AxiosRequestConfig['params'], signal: AbortSignal = {} as AbortSignal) {
+  get<T>(url: string, params?: AxiosRequestConfig['params'], signal?: AbortSignal) {
     return this.doAxiosRequest<T>('get', url, null, { params, config: { signal } });
   }
 
